@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Spin-a-Date 🤍</title>
+
+  <!--
+    Hi Dipu.
+    Of course you looked at the code.
+    Nerd. 😂
+
+    I'm proud of you. 🤍
+    — Rain
+  -->
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      min-height: 100%;
+      font-family: Georgia, "Times New Roman", serif;
+      color: #765d72;
+      background: #eee8ed;
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+    }
+
+    .page {
+      width: 100%;
+      max-width: 480px;
+      min-height: 100vh;
+
+      background-image: url("beary background.png");
+      background-size: cover;
+      background-position: top center;
+      background-repeat: no-repeat;
+
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+
+      padding: 155px 20px 42px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .wheel-area {
+      width: min(84vw, 390px);
+      height: min(84vw, 390px);
+      max-width: 390px;
+      max-height: 390px;
+
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-top: 8px;
+    }
+
+    #wheel {
+      width: 100%;
+      height: 100%;
+      display: block;
+
+      border-radius: 50%;
+      box-shadow:
+        0 6px 20px rgba(92, 65, 87, 0.16),
+        0 0 0 5px rgba(255, 252, 250, 0.78);
+
+      transition: transform 5.3s cubic-bezier(0.12, 0.64, 0.13, 1);
+    }
+
+    .pointer {
+      position: absolute;
+      top: -18px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 5;
+
+      width: 0;
+      height: 0;
+
+      border-left: 16px solid transparent;
+      border-right: 16px solid transparent;
+      border-top: 34px solid #765d72;
+
+      filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.12));
+    }
+
+    .wheel-center {
+      position: absolute;
+      z-index: 4;
+
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+
+      background: #fff9f8;
+      border: 4px solid #9d7d99;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      font-size: 27px;
+      box-shadow: 0 3px 9px rgba(88, 58, 79, 0.18);
+      user-select: none;
+    }
+
+    #spinButton {
+      margin-top: 26px;
+
+      border: none;
+      border-radius: 999px;
+
+      padding: 14px 38px;
+
+      background: #9d7d99;
+      color: white;
+
+      font-family: inherit;
+      font-size: 18px;
+      font-weight: bold;
+      letter-spacing: 1px;
+
+      cursor: pointer;
+
+      box-shadow: 0 5px 12px rgba(105, 75, 101, 0.18);
+      transition:
+        transform 0.15s ease,
+        opacity 0.15s ease;
+    }
+
+    #spinButton:hover {
+      transform: translateY(-1px);
+    }
+
+    #spinButton:active {
+      transform: scale(0.97);
+    }
+
+    #spinButton:disabled {
+      cursor: default;
+      opacity: 0.65;
+      transform: none;
+    }
+
+    .result-card {
+      width: 100%;
+      margin-top: 22px;
+      padding: 20px 20px 18px;
+
+      border-radius: 22px;
+
+      background: rgba(255, 250, 249, 0.94);
+      border: 2px solid rgba(157, 125, 153, 0.35);
+
+      box-shadow: 0 6px 20px rgba(89, 58, 83, 0.11);
+
+      text-align: center;
+
+      opacity: 0;
+      transform: translateY(10px);
+      pointer-events: none;
+
+      transition:
+        opacity 0.35s ease,
+        transform 0.35s ease;
+    }
+
+    .result-card.show {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    #resultNumber {
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 7px;
+      color: #a88ba5;
+    }
+
+    #resultTitle {
+      margin: 0 0 9px;
+
+      font-size: 23px;
+      line-height: 1.15;
+
+      color: #765d72;
+    }
+
+    #resultBlurb {
+      margin: 0;
+
+      font-size: 15px;
+      line-height: 1.55;
+
+      color: #705f6c;
+    }
+
+    .tiny-note {
+      margin-top: 14px;
+      font-size: 12px;
+      color: rgba(105, 82, 101, 0.72);
+    }
+
+    @media (max-width: 380px) {
+      .page {
+        padding-top: 135px;
+      }
+
+      .wheel-area {
+        width: 82vw;
+        height: 82vw;
+      }
+
+      .wheel-center {
+        width: 62px;
+        height: 62px;
+        font-size: 23px;
+      }
+
+      #spinButton {
+        margin-top: 22px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <main class="page">
+
+    <div class="wheel-area">
+      <div class="pointer" aria-hidden="true"></div>
+
+      <canvas
+        id="wheel"
+        width="800"
+        height="800"
+        aria-label="A wheel with thirty numbered date ideas">
+      </canvas>
+
+      <div class="wheel-center" aria-hidden="true">♡</div>
+    </div>
+
+    <button id="spinButton" type="button">
+      SPIN ♡
+    </button>
+
+    <section class="result-card" id="resultCard" aria-live="polite">
+      <div id="resultNumber"></div>
+      <h2 id="resultTitle"></h2>
+      <p id="resultBlurb"></p>
+
+      <div class="tiny-note">
+        The wheel has spoken. No complaining. 😂
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    const dates = [
+      {
+        title: "Lose Track of Time",
+        blurb: "Have a late-night call where we talk about absolutely everything and somehow forget what time it is."
+      },
+      {
+        title: "Movie Night",
+        blurb: "Watch the same movie while on call and react to every scene together."
+      },
+      {
+        title: "Our Cooking Show",
+        blurb: "Cook the same meal together and pretend we're hosting our own ridiculous little cooking show. Commentary encouraged. 😂"
+      },
+      {
+        title: "Questions We've Never Asked",
+        blurb: "Have a night devoted to questions we've never asked each other. Nothing fancy—just curiosity, honesty, and getting to know each other even better."
+      },
+      {
+        title: "Build Our Dream House",
+        blurb: "Plan our dream house together, right down to all the tiny, unnecessary and probably ridiculous details."
+      },
+      {
+        title: "Playlist Exchange",
+        blurb: "Make a playlist for each other and explain exactly why every song made the cut."
+      },
+      {
+        title: "Photo Challenge",
+        blurb: "Give each other random photo prompts and spend the day finding the perfect picture for each one."
+      },
+      {
+        title: "Try Something New",
+        blurb: "Choose something neither of us has ever done before and learn it together."
+      },
+      {
+        title: "Future Us Night",
+        blurb: "Imagine an ordinary day in our life together years from now. Where are we? What are we doing? What does normal life look like?"
+      },
+      {
+        title: "Favorite Memories",
+        blurb: "Write down our favorite memories of each other so far, then read them to each other."
+      },
+      {
+        title: "Ridiculous Competition Night",
+        blurb: "Games, trivia, drawing—anything where we can become unnecessarily competitive over something that absolutely does not matter. 😂"
+      },
+      {
+        title: "Random Trip Planning",
+        blurb: "Pick a random place in the world, learn about it together, and pretend we're planning a trip there."
+      },
+      {
+        title: "No Distractions",
+        blurb: "No scrolling, no multitasking, no distractions. Just sit together on video and talk."
+      },
+      {
+        title: "Recreate a Favorite",
+        blurb: "Recreate our first date or one of our favorite moments together and find a way to make round two even better."
+      },
+      {
+        title: "An Ordinary Day",
+        blurb: "Eventually: wake up beside each other, make breakfast, run errands, laugh about stupid things, cuddle, and fall asleep together. Nothing spectacular. Just ours."
+      },
+
+      {
+        title: "One-Minute Drawing Challenge",
+        blurb: "We each secretly make a numbered drawing list. Pick a number, reveal the prompt, and the other person gets exactly one minute to draw it."
+      },
+      {
+        title: "Virtual Escape Room",
+        blurb: "Attempt an online escape room together and find out whether we'd actually survive being trapped somewhere as a team."
+      },
+      {
+        title: "Language Date",
+        blurb: "Pick a language and learn a handful of words or phrases together. Bonus points for absolutely terrible pronunciation."
+      },
+      {
+        title: "Design the Perfect Date",
+        blurb: "Plan our dream date for when we're physically together—activities, food, atmosphere, outfits, everything."
+      },
+      {
+        title: "Plan a Future Trip",
+        blurb: "Choose somewhere we genuinely want to visit and plan the trip: where we'd stay, what we'd eat, what we'd see, and what we'd definitely argue about packing."
+      },
+      {
+        title: "Personality Quiz Night",
+        blurb: "Take the same personality or relationship quiz, compare results, and discuss what fits, what doesn't, and what surprises us."
+      },
+      {
+        title: "Handwritten Letters",
+        blurb: "Write actual handwritten letters, send them to each other, and save opening them for a video-call date."
+      },
+      {
+        title: "Cook Together",
+        blurb: "Pick one recipe, buy the ingredients separately, then make the exact same thing together over video call."
+      },
+      {
+        title: "Couples Trivia",
+        blurb: "Make trivia questions about each other—favorites, childhood stories, embarrassing moments, dreams, and relationship memories—and see who actually knows whom best."
+      },
+      {
+        title: "Dessert Date",
+        blurb: "Each pick or make a dessert and eat it together on call. Or make the same dessert and turn it into a completely unnecessary competition."
+      },
+      {
+        title: "Our Couple Bucket List",
+        blurb: "Sit down together and make one giant list of things we want to experience someday."
+      },
+      {
+        title: "Create Our Ritual",
+        blurb: "Invent one little relationship ritual that's ours—something we can keep doing regularly no matter how busy life gets."
+      },
+      {
+        title: "PowerPoint Party",
+        blurb: "Make ridiculous presentations about each other and present them with completely undeserved academic seriousness."
+      },
+      {
+        title: "Dare Roulette",
+        blurb: "Make a wheel or list of fun and flirty dares, then let chance decide what happens next."
+      },
+      {
+        title: "Call in the Dark",
+        blurb: "Turn the lights off, forget video, and have a voice-only call in the dark. Just us talking until one of us gets sleepy."
+      }
+    ];
+
+
+    const canvas = document.getElementById("wheel");
+    const ctx = canvas.getContext("2d");
+
+    const spinButton = document.getElementById("spinButton");
+
+    const resultCard = document.getElementById("resultCard");
+    const resultNumber = document.getElementById("resultNumber");
+    const resultTitle = document.getElementById("resultTitle");
+    const resultBlurb = document.getElementById("resultBlurb");
+
+    const count = dates.length;
+    const slice = (Math.PI * 2) / count;
+    const degreesPerSlice = 360 / count;
+
+    let currentRotation = 0;
+    let spinning = false;
+
+
+    const colors = [
+      "#d8bfd3",
+      "#f5dfe9",
+      "#c9abc5",
+      "#f1ccd9",
+      "#e5d3e4"
+    ];
+
+
+    function drawWheel() {
+      const size = canvas.width;
+      const center = size / 2;
+      const radius = center - 16;
+
+      ctx.clearRect(0, 0, size, size);
+
+      for (let i = 0; i < count; i++) {
+
+        const startAngle =
+          -Math.PI / 2 -
+          slice / 2 +
+          i * slice;
+
+        const endAngle = startAngle + slice;
+
+        ctx.beginPath();
+        ctx.moveTo(center, center);
+        ctx.arc(
+          center,
+          center,
+          radius,
+          startAngle,
+          endAngle
+        );
+        ctx.closePath();
+
+        ctx.fillStyle = colors[i % colors.length];
+        ctx.fill();
+
+        ctx.strokeStyle = "rgba(255,255,255,0.65)";
+        ctx.lineWidth = 3;
+        ctx.stroke();
+
+
+        const textAngle =
+          startAngle + slice / 2;
+
+        const textRadius = radius * 0.79;
+
+        const x =
+          center + Math.cos(textAngle) * textRadius;
+
+        const y =
+          center + Math.sin(textAngle) * textRadius;
+
+        ctx.save();
+
+        ctx.translate(x, y);
+
+        ctx.rotate(textAngle + Math.PI / 2);
+
+        ctx.fillStyle = "#6f586c";
+        ctx.font = "bold 27px Georgia";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+
+        ctx.fillText(i + 1, 0, 0);
+
+        ctx.restore();
+      }
+
+
+      ctx.beginPath();
+      ctx.arc(
+        center,
+        center,
+        radius,
+        0,
+        Math.PI * 2
+      );
+
+      ctx.strokeStyle = "#9d7d99";
+      ctx.lineWidth = 10;
+      ctx.stroke();
+    }
+
+
+    function showResult(index) {
+
+      const selected = dates[index];
+
+      resultNumber.textContent =
+        "DATE #" + (index + 1);
+
+      resultTitle.textContent =
+        selected.title;
+
+      resultBlurb.textContent =
+        selected.blurb;
+
+      resultCard.classList.add("show");
+    }
+
+
+    function spinWheel() {
+
+      if (spinning) {
+        return;
+      }
+
+      spinning = true;
+
+      resultCard.classList.remove("show");
+
+      spinButton.disabled = true;
+      spinButton.textContent = "SPINNING...";
+
+
+      const winningIndex =
+        Math.floor(Math.random() * count);
+
+
+      const extraSpins =
+        6 + Math.floor(Math.random() * 3);
+
+
+      const currentNormalized =
+        ((currentRotation % 360) + 360) % 360;
+
+
+      const desiredRotation =
+        (360 - winningIndex * degreesPerSlice) % 360;
+
+
+      const adjustment =
+        (desiredRotation -
+          currentNormalized +
+          360) %
+        360;
+
+
+      currentRotation +=
+        extraSpins * 360 +
+        adjustment;
+
+
+      canvas.style.transform =
+        `rotate(${currentRotation}deg)`;
+
+
+      window.setTimeout(() => {
+
+        showResult(winningIndex);
+
+        spinButton.disabled = false;
+        spinButton.textContent = "SPIN AGAIN ♡";
+
+        spinning = false;
+
+      }, 5450);
+    }
+
+
+    drawWheel();
+
+    spinButton.addEventListener(
+      "click",
+      spinWheel
+    );
+  </script>
+
+</body>
+</html>
